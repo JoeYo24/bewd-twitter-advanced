@@ -110,7 +110,7 @@ RSpec.describe TweetsController, type: :controller do
             id: tweet1.id,
             username: user1.username,
             message: 'Test Message',
-            image: nil
+            image: nil 
           }
         ]
       }.to_json)

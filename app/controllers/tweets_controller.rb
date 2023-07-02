@@ -5,34 +5,23 @@ class TweetsController < ApplicationController
   end
 
   def create
-    token = cookies.signed[:twitter_session_token]
-    session = Session.find_by(token: token)
-    user = session.user
-    @tweet = user.tweets.new(tweet_params)
+    if !current_user.pass_rate_limit?
+      return render 'tweets/rate_limit_error'
+    end
+
+    @tweet = current_user.tweets.new(tweet_params)
 
     if @tweet.save 
-      TweetMailer.notify(@tweet).deliver!
       render 'tweets/create'
     end
   end
 
-  def destroy
-    token = cookies.signed[:twitter_session_token]
-    session = Session.find_by(token: token)
+  def destroy 
+    authenticate_user!
+    @tweet = current_user&.tweets&.find_by(id: params[:id])
 
-    return render json: { success: false } unless session
-
-    user = session.user
-    tweet = Tweet.find_by(id: params[:id])
-
-    if tweet && (tweet.user == user) && tweet.destroy
-      render json: {
-        success: true
-      }
-    else
-      render json: {
-        success: false
-      }
+    if @tweet && @tweet.destroy 
+      render json: { success: true }
     end
   end
 
